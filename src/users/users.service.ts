@@ -1,5 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { CreateUserDto } from './dto/create-user.dto';
 
 @Injectable()
 export class UsersService {
@@ -16,17 +17,20 @@ export class UsersService {
   }
 
   findOne(id: number) {
-    return this.users.find((user) => user.id === id);
+    const user = this.users.find((user) => user.id === id);
+    if (!user) throw new NotFoundException('User not found!');
+
+    return user;
   }
 
-  create(user: { name: string; email: string; role: string }) {
-    if (this.findByEmail(user.email)) {
+  create(createUserDto: CreateUserDto) {
+    if (this.findByEmail(createUserDto.email)) {
       return { message: 'Email already exists' };
     }
 
     this.users.push({
       id: this.users.length + 1,
-      ...user,
+      ...createUserDto,
     });
 
     return this.users[this.users.length - 1];
@@ -34,12 +38,14 @@ export class UsersService {
 
   update(id: number, updateUserDto: UpdateUserDto) {
     const index = this.users.findIndex((user) => user.id === id);
+    if (index < 0) throw new NotFoundException('User not found!');
     this.users[index] = { ...this.users[index], ...updateUserDto };
     return this.users[index];
   }
 
   remove(id: number) {
     const user = this.users.find((user) => user.id === id);
+    if (!user) throw new NotFoundException('User not found!');
     this.users = this.users.filter((user) => user.id !== id);
     return user;
   }
